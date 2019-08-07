@@ -25,6 +25,7 @@ CENTOS_SNAP=${CENTOS_SNAP:-$(_read_build_config DEFAULT centos_reposnap)}
 
 BASE_IMAGE_NAME=`echo $BASE_IMAGE_URL | awk -F "/" '{print $NF}'`
 BASE_IMAGE_SIZE="8GiB"
+[ "$(uname -m)" != aarch64 ] || EXTRA_ELEMENTS="block-device-efi"
 
 wget_args=""
 [ -n "$GOLDEN_BASE_IMAGE_FETCH_USER" ] && wget_args="$wget_args --http-user=$GOLDEN_BASE_IMAGE_FETCH_USER"
@@ -55,6 +56,6 @@ DIB_DEBUG_TRACE=1 \
   DIB_YUM_REPO_CONF="${REPO_FILES}/repositories.repo ${REPO_FILES}/localrepo.repo" \
   DIB_LOCAL_IMAGE=$WORKTMP/base-img/$BASE_IMAGE_NAME \
   ELEMENTS_PATH=$scriptdir/dib_elements/ \
-  /usr/bin/disk-image-create --root-label img-rootfs --image-size $BASE_IMAGE_SIZE vm centos7 selinux-permissive myproduct -o $TMP_GOLDEN_IMAGE
+  /usr/bin/disk-image-create --root-label img-rootfs --image-size $BASE_IMAGE_SIZE vm centos7 selinux-permissive myproduct ${EXTRA_ELEMENTS:-} -o $TMP_GOLDEN_IMAGE
 
 rm -rf $WORKTMP/base-img
