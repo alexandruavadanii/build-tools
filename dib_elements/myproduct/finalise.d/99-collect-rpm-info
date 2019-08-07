@@ -19,6 +19,16 @@ fi
 set -eu
 set -o pipefail
 
+# On AArch64, since the cloud image is very old, some packages are obsolete and
+# get upgraded from the 'updates' repository. However, after the whole distro
+# is upgraded and the repos are pointing to the latest repositories, the same
+# packages previously available in the 'updates' repo are now listed in the
+# 'base' repo, breaking our RPM availability check below.
+#
+# Work around this by forcing a reinstall of the problematic packages, which
+# will also update the 'From repo' fields.
+[ "$(uname -m)" != aarch64 ] || yum reinstall -y ncurses ncurses-base ncurses-libs
+
 yum info installed > /root/yum_info_installed
 rpm -qai --queryformat "Obsoletes   : [%{OBSOLETES},]\n" > /root/rpm_info_installed
 

@@ -34,6 +34,7 @@ cp $LIBDIR/mock/site-defaults.cfg $output_mock_dir/
 mock_cfg=$output_mock_dir/mock.cfg
 sed -e "/#REPOSITORIES#/r $output_repo_files_dir/repositories.repo" $LIBDIR/mock/mock.cfg.template > $mock_cfg
 sed -i \
+  -e "s/#RPM_ARCH#/\"$(uname -m)\"/" \
   -e "s/#RPM_PACKAGER#/\"$(_read_build_config $config_ini rpm packager)\"/" \
   -e "s/#RPM_VENDOR#/\"$(_read_build_config $config_ini rpm vendor)\"/" \
   -e "s/#RPM_LICENSE#/\"$(_read_build_config $config_ini rpm license)\"/" \

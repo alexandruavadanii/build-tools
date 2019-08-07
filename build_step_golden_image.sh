@@ -40,7 +40,7 @@ mkdir -p $(dirname $output_image_path)
 mv -f ${TMP_GOLDEN_IMAGE}.qcow2 $output_image_path
 
 input_dir=$WORKTMP/rpmdata
-mkdir $input_dir
+mkdir -p $input_dir
 cp -r \
   $BUILD_CONFIG_INI $RPMLISTS/rpm_info_installed $RPMLISTS/yum_info_installed $RPMLISTS/crypto_rpms.json $RPMLISTS/boms \
   $input_dir

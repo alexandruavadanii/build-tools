@@ -15,8 +15,8 @@
 # Root name to be used for chroot and caching, must differ between products
 config_opts['root'] = 'akrainolite'
 
-config_opts['target_arch'] = 'x86_64'
-config_opts['legal_host_arches'] = ('x86_64',)
+config_opts['target_arch'] = #RPM_ARCH#
+config_opts['legal_host_arches'] = ('x86_64','aarch64',)
 config_opts['dist'] = 'el7'  # only useful for --resultdir variable subst
 config_opts['chroot_setup_cmd'] = 'install createrepo yum-utils bison byacc cscope ctags cvs diffstat doxygen flex gcc gcc-c++ gcc-gfortran gettext git indent intltool libtool patch patchutils rcs redhat-rpm-config rpm-build subversion swig systemtap sudo'
 config_opts['plugin_conf']['yum_cache_enable'] = False

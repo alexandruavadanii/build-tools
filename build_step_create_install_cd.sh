@@ -30,9 +30,10 @@ mkdir -p $tmp
 rm -rf $iso_build_dir
 mkdir -p $iso_build_dir
 
+iso_arch="$(uname -m)"
 reposnap_base=$(_read_build_config DEFAULT centos_reposnap)
 release_version=$PRODUCT_RELEASE_LABEL
-reposnap_base_dir="${reposnap_base}/os/x86_64/"
+reposnap_base_dir="${reposnap_base}/os/${iso_arch}/"
 iso_image_label=$(_read_build_config DEFAULT iso_image_label)
 cd_efi_dir="${reposnap_base_dir}/EFI"
 cd_images_dir="${reposnap_base_dir}/images"
@@ -59,20 +60,24 @@ wget_dir ${cd_efi_dir}/
 wget_dir ${cd_images_dir}/
 rm -f images/boot.iso
 sync
-wget_dir ${cd_isolinux_dir}/
-chmod +w -R isolinux/ EFI/ images/
+chmod +w -R EFI/ images/
+# AArch64 does not support PC-BIOS, so skip all isolinux processing
+if [ "${iso_arch}" != 'aarch64' ]; then
+    wget_dir ${cd_isolinux_dir}/
+    chmod +w -R isolinux/
 
-if [ -e $scriptdir/isolinux/isolinux.cfg ]; then
-    cp $scriptdir/isolinux/isolinux.cfg isolinux/isolinux.cfg
-else
-    sed -i "s/^timeout.*/timeout 100/" isolinux/isolinux.cfg
-    sed -i "s/^ -  Press.*/Beginning the cloud installation process/" isolinux/boot.msg
-    sed -i "s/^#menu hidden/menu hidden/" isolinux/isolinux.cfg
-    sed -i "s/menu default//" isolinux/isolinux.cfg
-    sed -i "/^label linux/amenu default" isolinux/isolinux.cfg
-    sed -i "/append initrd/ s/$/ console=tty0 console=ttyS1,115200/" isolinux/isolinux.cfg
+    if [ -e $scriptdir/isolinux/isolinux.cfg ]; then
+        cp $scriptdir/isolinux/isolinux.cfg isolinux/isolinux.cfg
+    else
+        sed -i "s/^timeout.*/timeout 100/" isolinux/isolinux.cfg
+        sed -i "s/^ -  Press.*/Beginning the cloud installation process/" isolinux/boot.msg
+        sed -i "s/^#menu hidden/menu hidden/" isolinux/isolinux.cfg
+        sed -i "s/menu default//" isolinux/isolinux.cfg
+        sed -i "/^label linux/amenu default" isolinux/isolinux.cfg
+        sed -i "/append initrd/ s/$/ console=tty0 console=ttyS1,115200/" isolinux/isolinux.cfg
+    fi
+    cp -f $scriptdir/akraino_splash.png isolinux/splash.png
 fi
-cp -f $scriptdir/akraino_splash.png isolinux/splash.png
 
 popd
 
@@ -82,17 +87,23 @@ pushd $tmp
 export LIBGUESTFS_BACKEND=direct
 virt-copy-out -a $input_image /boot/ ./
 chmod u+w boot/
-rm -f $iso_build_dir/isolinux/vmlinuz $iso_build_dir/isolinux/initrd.img
 KVER=`ls -lrt boot/vmlinuz-* |grep -v rescue |tail -n1 |awk -F 'boot/vmlinuz-' '{print $2}'`
-cp -fp boot/vmlinuz-${KVER} $iso_build_dir/isolinux/vmlinuz
-cp -fp boot/initrd-provisioning.img $iso_build_dir/isolinux/initrd.img
+if [ "${iso_arch}" != 'aarch64' ]; then
+    rm -f $iso_build_dir/isolinux/vmlinuz $iso_build_dir/isolinux/initrd.img
+    cp -fp boot/vmlinuz-${KVER} $iso_build_dir/isolinux/vmlinuz
+    cp -fp boot/initrd-provisioning.img $iso_build_dir/isolinux/initrd.img
+fi
 rm -rf boot/
 
 echo "Generating boot iso"
+if [ "${iso_arch}" != 'aarch64' ]; then
+    bios_specific_args="-b isolinux/isolinux.bin -c isolinux/boot.cat " \
+                       "-no-emul-boot -boot-load-size 4 -boot-info-table"
+fi
 genisoimage  -U -r -v -T -J -joliet-long \
   -V "${release_version}" -A "${release_version}" -P ${iso_image_label} \
-  -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 \
-  -boot-info-table -eltorito-alt-boot -e images/efiboot.img -no-emul-boot \
+  ${bios_specific_args:-} \
+  -eltorito-alt-boot -e images/efiboot.img -no-emul-boot \
   -o boot.iso $iso_build_dir
 _publish_image $tmp/boot.iso $output_bootcd_path
 
@@ -104,10 +115,10 @@ mkdir -p $iso_build_dir/rpms
 echo "Generating product iso"
 genisoimage  -U -r -v -T -J -joliet-long \
   -V "${release_version}" -A "${release_version}" -P ${iso_image_label} \
-  -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 \
-  -boot-info-table -eltorito-alt-boot -e images/efiboot.img -no-emul-boot \
+  ${bios_specific_args:-} \
+  -eltorito-alt-boot -e images/efiboot.img -no-emul-boot \
   -o release.iso $iso_build_dir
-isohybrid $tmp/release.iso
+[ "${iso_arch}" = 'aarch64' ] || isohybrid $tmp/release.iso
 _publish_image $tmp/release.iso $output_image_path
 
 echo "Clean up to preserve workspace footprint"

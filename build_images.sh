@@ -54,6 +54,9 @@ source $scriptdir/lib.sh
 
 _initialize_work_dirs
 
+dib_patch="$scriptdir/docker-context/Dockerfile-dib.$(uname -m).patch"
+if [ -e "${dib_patch}" ]; then patch "$scriptdir/docker-context/Dockerfile-dib" "${dib_patch}"; fi
+
 docker build -f $scriptdir/docker-context/Dockerfile-dib -t dib $scriptdir/docker-context
 docker build -f $scriptdir/docker-context/Dockerfile-buildtools -t buildtools $scriptdir/docker-context
 

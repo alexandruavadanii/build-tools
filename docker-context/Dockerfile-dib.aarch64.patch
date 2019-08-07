@@ -1,0 +1,13 @@
+diff --git a/docker-context/Dockerfile-dib b/docker-context/Dockerfile-dib
+index 038b64d..393f10f 100644
+--- a/docker-context/Dockerfile-dib
++++ b/docker-context/Dockerfile-dib
+@@ -14,7 +14,7 @@
+
+
+ # Use newer than the CentOS stock diskimage-builder via "cloud" repo
+-FROM centos:7.6.1810
++FROM centos@sha256:df89b0a0b42916b5b31b334fd52d3e396c226ad97dfe772848bdd6b00fb42bf0
+ RUN \
+     if [ "$(uname -m)" = aarch64 ]; then \
+         REPO_URI=http://mirror.centos.org/altarch/7/cloud/aarch64/openstack-queens/; \
