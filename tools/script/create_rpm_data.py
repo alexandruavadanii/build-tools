@@ -256,6 +256,8 @@ class RpmDataBuilder(object):
         if 'From repo' in rpm.keys():
             if rpm['From repo'] == 'localrepo':
                 return 'localrepo'
+            if rpm['From repo'] == 'anaconda':
+                return 'localrepo'
             available_repo_rpms = available_rpms[rpm['From repo']]
             for a_rpm in available_repo_rpms:
                 if self._is_same_rpm(a_rpm, rpm):
