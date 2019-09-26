@@ -86,6 +86,12 @@ if [ "${iso_arch}" != 'aarch64' ]; then
     cp -f $scriptdir/akraino_splash.png isolinux/splash.png
 fi
 
+# Update grub.cfg for EFI booting, similar to isolinux
+sed -i '/menuentry/{N;N;N;q}' EFI/BOOT/grub.cfg
+sed -i -e 's|Install CentOS 7|Beginning the cloud installation process|' \
+       -e '/vmlinuz/ s/$/ console=tty0 console=ttyS1,115200 console=ttyAMA0,115200/' \
+    EFI/BOOT/grub.cfg
+
 popd
 
 pushd $tmp
@@ -113,6 +119,9 @@ if [ "${iso_arch}" != 'aarch64' ]; then
     cp -fp boot/vmlinuz-${KVER} $iso_build_dir/isolinux/vmlinuz
     cp -fp boot/initrd-provisioning.img $iso_build_dir/isolinux/initrd.img
 fi
+rm -f $iso_build_dir/images/pxeboot/vmlinuz $iso_build_dir/images/pxeboot/initrd.img
+cp -fp boot/vmlinuz-${KVER} $iso_build_dir/images/pxeboot/vmlinuz
+cp -fp boot/initrd-provisioning.img $iso_build_dir/images/pxeboot/initrd.img
 rm -rf boot/
 
 echo "Generating boot iso"
